@@ -470,9 +470,9 @@ TB_TOPIC = "v1/devices/me/telemetry"
 # Map patient name → ThingsBoard device ACCESS TOKEN
 # Create devices in ThingsBoard first, then paste tokens here
 PATIENT_TOKENS = {
-    "Patient_3": "oTUaBl7OObNa3TRYdKDh",
-    "Patient_2": "CdCboTGBpu9qoFwkMdZA",
-    "Patient_1": "NEl6YEQQEg4sWV65l2il",
+    "Patient_3": "",
+    "Patient_2": "",
+    "Patient_1": "",
 }
 
 PUBLISH_INTERVAL = 1.5   # seconds between telemetry pushes
