@@ -1,0 +1,146 @@
+{
+  "_comment": "=======================================================",
+  "_info":    "ThingsBoard Dashboard JSON — Hospital Smartwatch Monitor",
+  "_import":  "ThingsBoard UI → Dashboards → Import → paste this file",
+  "_version": "ThingsBoard CE 3.6+",
+  "=======================================================": "",
+
+  "title": "Hospital Smartwatch Monitor",
+  "configuration": {
+    "description": "Real-time patient monitoring from PAMAP2 CNN edge devices",
+    "widgets": {
+
+      "WIDGET_OVERVIEW": {
+        "_note": "Add manually via ThingsBoard UI — instructions below",
+        "type": "latest_values_card",
+        "title": "Patient Status Overview",
+        "datasource": "All Patients alias",
+        "keys": ["overall_status", "predicted_activity", "heart_rate", "alert_msg"]
+      },
+
+      "WIDGET_HEART_RATE_CHART": {
+        "type": "time_series_chart",
+        "title": "Heart Rate (bpm) — Last 5 min",
+        "datasource": "Patient alias",
+        "keys": ["heart_rate"],
+        "settings": {
+          "showLegend": true,
+          "smoothLines": true,
+          "color": "#e53935"
+        }
+      },
+
+      "WIDGET_ACC_CHART": {
+        "type": "time_series_chart",
+        "title": "Acceleration Magnitude",
+        "keys": ["acc_magnitude"],
+        "settings": {"color": "#1976D2"}
+      },
+
+      "WIDGET_GYRO_CHART": {
+        "type": "time_series_chart",
+        "title": "Gyroscope Magnitude",
+        "keys": ["gyro_magnitude"],
+        "settings": {"color": "#7B1FA2"}
+      },
+
+      "WIDGET_ACTIVITY_LABEL": {
+        "type": "label_card",
+        "title": "Predicted Activity",
+        "keys": ["predicted_activity", "confidence_pct"]
+      },
+
+      "WIDGET_ALARM_TABLE": {
+        "type": "alarms_table",
+        "title": "Active Alerts",
+        "keys": ["overall_status", "alert_msg", "hr_status"]
+      }
+    }
+  },
+
+  "dashboard_setup_instructions": {
+    "step_1": "Log in to https://demo.thingsboard.io or your TB instance",
+    "step_2": "Go to Devices → Add Device → set name e.g. 'Patient_1'",
+    "step_3": "Open Device → copy Access Token → paste into 2_simulate_edge_devices.py PATIENT_TOKENS",
+    "step_4": "Repeat for each patient (Patient_2, Patient_3, …)",
+    "step_5": "Go to Dashboards → + (Add) → Create blank dashboard → Edit mode (pencil icon)",
+
+    "add_entity_alias": {
+      "_note": "You need two aliases",
+      "alias_single_patient": {
+        "name": "Single Patient",
+        "type": "Single entity",
+        "entity": "Device: Patient_1"
+      },
+      "alias_all_patients": {
+        "name": "All Patients",
+        "type": "Entity list",
+        "entities": ["Device: Patient_1", "Device: Patient_2", "Device: Patient_3"]
+      }
+    },
+
+    "add_widgets": [
+      {
+        "widget": "Cards → Entities table",
+        "title": "Patient Overview",
+        "alias": "All Patients",
+        "columns": ["heart_rate", "predicted_activity", "overall_status", "alert_msg", "confidence_pct"],
+        "tip": "Use color cell function to colour overall_status: NORMAL=green, WARNING=orange, ALARM=red"
+      },
+      {
+        "widget": "Charts → Time-series chart",
+        "title": "Heart Rate",
+        "alias": "All Patients",
+        "key": "heart_rate",
+        "time_window": "5 minutes",
+        "tip": "Add threshold lines: low_alarm=40, high_alarm=180 using Advanced tab → Thresholds"
+      },
+      {
+        "widget": "Charts → Time-series chart",
+        "title": "Acceleration Magnitude",
+        "alias": "All Patients",
+        "key": "acc_magnitude",
+        "time_window": "5 minutes"
+      },
+      {
+        "widget": "Charts → Time-series chart",
+        "title": "Gyroscope Magnitude",
+        "alias": "All Patients",
+        "key": "gyro_magnitude",
+        "time_window": "5 minutes"
+      },
+      {
+        "widget": "Cards → Value card",
+        "title": "Activity & Confidence",
+        "alias": "Single Patient",
+        "keys": ["predicted_activity", "confidence_pct"]
+      },
+      {
+        "widget": "Cards → HTML card",
+        "title": "Status Indicator",
+        "alias": "Single Patient",
+        "key": "overall_status",
+        "html_template": "<div style='font-size:2em; font-weight:bold; color: ${overall_status === \"ALARM\" ? \"red\" : overall_status === \"WARNING\" ? \"orange\" : \"green\"}'>${overall_status}</div><p>${alert_msg}</p>"
+      },
+      {
+        "widget": "Cards → Alarm count",
+        "title": "Active Alarms",
+        "alias": "All Patients",
+        "alarm_type": "ALARM"
+      }
+    ],
+
+    "configure_alarms_in_tb": {
+      "_note": "Set up Rule Chain to raise TB alarms when overall_status = ALARM",
+      "rule_chain": {
+        "trigger": "Message type: POST_TELEMETRY",
+        "filter": "Script: msg.overall_status === 'ALARM'",
+        "action": "Create Alarm — type: PatientAlert — severity: CRITICAL — details: msg.alert_msg"
+      },
+      "warning_rule": {
+        "filter": "Script: msg.overall_status === 'WARNING'",
+        "action": "Create Alarm — type: PatientAlert — severity: WARNING"
+      }
+    }
+  }
+}
